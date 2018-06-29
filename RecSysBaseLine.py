@@ -2,13 +2,13 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from RecSys import RecSys
 
-class BaseLineRecSys(RecSys):
+class RecSysBaseLine(RecSys):
     def __init__(self):
         super().__init__()
 
     def predict_rating(self, user_idx, item_idx, adjusted=False):
         """
-        >>> recsys = BaseLineRecSys()
+        >>> recsys = RecSysBaseLine()
         >>> recsys.load_ratings("testcase_ratings.csv")
         >>> user_idx = recsys.get_user_idx("U1")
         >>> item_idx = recsys.get_item_idx("I4")
@@ -70,7 +70,7 @@ class BaseLineRecSys(RecSys):
         """
         return pairs of (item_idx, predicted_rating)
 
-        >>> recsys = BaseLineRecSys()
+        >>> recsys = RecSysBaseLine()
         >>> recsys.load_ratings("testcase_ratings.csv")
         >>> user_idx = recsys.get_user_idx("U1")
         >>> predictions = recsys.predict_top_k_recomm(user_idx, 2)

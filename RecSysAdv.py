@@ -3,7 +3,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import svds
 from RecSys import RecSys
 
-class AdvRecSys(RecSys):
+class RecSysAdv(RecSys):
     def __init__(self):
         super().__init__()
 
@@ -11,7 +11,7 @@ class AdvRecSys(RecSys):
         '''
         lamda: regularization parameter
         alpha: learning rate
-        >>> recsys = AdvRecSys()
+        >>> recsys = RecSysAdv()
         >>> recsys.load_ratings("testcase_ratings.csv")
         #>>> recsys.load_ratings("../Dataset/ratings_Electronics_50.csv")
         #>>> recsys.SGD()
@@ -46,7 +46,7 @@ class AdvRecSys(RecSys):
     def biased_ALS(self, lamda=0.01):
         '''
         lamda: regularization parameter
-        >>> recsys = AdvRecSys()
+        >>> recsys = RecSysAdv()
         >>> recsys.load_ratings("testcase_ratings.csv")
         #>>> recsys.load_ratings("../Dataset/ratings_Electronics_50.csv")
         >>> recsys.biased_ALS()
