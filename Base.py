@@ -239,8 +239,9 @@ class EvaMatrix():
         self.time /= 1.
 
     def print_data(self):
-        print("RMSE = {} MAE = {}".format(self.rmse, self.mae))
+        np.set_printoptions(precision=2)
+        print("RMSE = {:.2f}\nMAE  = {:.2f}".format(self.rmse, self.mae))
         print(
-            "P@K = {} R@K = {} MRR@K = {} NDCG@K = {}".format(
+            "P@K    = {}\nR@K    = {}\nMRR@K  = {}\nNDCG@K = {}".format(
                 self.p_at_k, self.r_at_k, self.mrr_at_k, self.ndcg_at_k))
         print("time = {:.2f} Sec".format(self.time))

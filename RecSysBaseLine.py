@@ -158,11 +158,13 @@ class RecSysBaseLine(Repo):
         # union all the items these user has rated. Finally, exclude the items
         # the target user has already rated.
         candidate_items = []
+        user_list = []
         for item_idx in rated_items:
-            user_list = self.util_mat[:, item_idx].nonzero()[0]
-            for user in user_list:
-                candidate_items = np.union1d(
-                        candidate_items, self.util_mat[user].nonzero()[1])
+            user_list = np.union1d(
+                    user_list, self.util_mat[:, item_idx].nonzero()[0])
+        for user in user_list:
+            candidate_items = np.union1d(
+                    candidate_items, self.util_mat[user].nonzero()[1])
         candidate_items = np.setdiff1d(candidate_items, rated_items)
 
         predictions = []

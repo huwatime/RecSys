@@ -69,14 +69,15 @@ class EvaSys(Repo):
         """
 
         result_all_model = EvaMatrix(positions)
-        start_time = time.time()
         for fold in range(self.num_fold):
+            print("\n=============== Fold", fold+1)
             training_file, test_file = self.generate_train_test_files(fold)
             result = self.evaluate_core(
                     training_file, test_file, rec_sys, positions)
             result_all_model.accumulate(result)
         result_all_model.avg(self.num_fold, self.num_fold)
-        result_all_model.time = time.time() - start_time
+        print("\n=============== Matrics Avg and Total Time")
+        result_all_model.print_data()
 
         return result_all_model
 
@@ -102,6 +103,7 @@ class EvaSys(Repo):
         return training_file_name, test_file_name
 
     def evaluate_core(self, training_file, test_file, rec_sys, positions):
+        start_time = time.time()
         rec_sys.load_ratings(
                 training_file,
                 True,
@@ -125,6 +127,7 @@ class EvaSys(Repo):
 
         # Loop all users in test_data
         for user_idx in range(num_users):
+            print("Computing User {} ...".format(user_idx+1), end='\r', flush=True)
             result = EvaMatrix(positions)
             positive_items = {}
 
@@ -182,4 +185,7 @@ class EvaSys(Repo):
 
         result_all_user.avg(num_ratings, num_users)
         result_all_user.rmse = np.sqrt(result_all_user.rmse)
+        result_all_user.time = time.time() - start_time
+        print()
+        result_all_user.print_data()
         return result_all_user
