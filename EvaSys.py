@@ -1,4 +1,5 @@
 import math
+import time
 import numpy as np
 from Base import Repo
 from Base import EvaMatrix
@@ -68,12 +69,14 @@ class EvaSys(Repo):
         """
 
         result_all_model = EvaMatrix(positions)
+        start_time = time.time()
         for fold in range(self.num_fold):
             training_file, test_file = self.generate_train_test_files(fold)
             result = self.evaluate_core(
                     training_file, test_file, rec_sys, positions)
             result_all_model.accumulate(result)
         result_all_model.avg(self.num_fold, self.num_fold)
+        result_all_model.time = time.time() - start_time
 
         return result_all_model
 

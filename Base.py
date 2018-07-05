@@ -180,7 +180,7 @@ class EvaMatrix():
         self.r_at_k = np.zeros(len(positions))
         self.mrr_at_k = np.zeros(len(positions))
         self.ndcg_at_k = np.zeros(len(positions))
-        self.time_at_k = np.zeros(len(positions))
+        self.time = 0
 
     def accumulate(self, mat):
         """
@@ -210,12 +210,12 @@ class EvaMatrix():
         self.r_at_k = np.add(self.r_at_k, mat.r_at_k)
         self.mrr_at_k = np.add(self.mrr_at_k, mat.mrr_at_k)
         self.ndcg_at_k = np.add(self.ndcg_at_k, mat.ndcg_at_k)
-        self.time_at_k = np.add(self.time_at_k, mat.time_at_k)
+        self.time += mat.time
 
     def avg(self, denom1, denom2):
         """
         Take average on all members, where rmse and mat are divided by denom1,
-        and the other XX@K metrics are divided by denom2.
+        the other XX@K metrics are divided by denom2, and time is NOT divided.
 
         >>> positions = [1, 2, 5, 10]
         >>> eva1 = EvaMatrix(positions)
@@ -236,11 +236,11 @@ class EvaMatrix():
         self.r_at_k /= denom2
         self.mrr_at_k /= denom2
         self.ndcg_at_k /= denom2
-        self.time_at_k /= denom2
+        self.time /= 1.
 
     def print_data(self):
-        print("RMSE = {}\nMAE = {}".format(self.rmse, self.mae))
+        print("RMSE = {} MAE = {}".format(self.rmse, self.mae))
         print(
-            "P@K = {} R@K = {} MRR@K = {} NDCG@K = {} time@K = {}".format(
-                self.p_at_k, self.r_at_k, self.mrr_at_k, self.ndcg_at_k,
-                self.time_at_k))
+            "P@K = {} R@K = {} MRR@K = {} NDCG@K = {}".format(
+                self.p_at_k, self.r_at_k, self.mrr_at_k, self.ndcg_at_k))
+        print("time = {:.2f} Sec".format(self.time))
