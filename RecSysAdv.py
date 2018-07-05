@@ -1,9 +1,9 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.sparse.linalg import svds
-from RecSys import RecSys
+from Base import Repo
 
-class RecSysAdv(RecSys):
+class RecSysAdv(Repo):
     def __init__(self):
         super().__init__()
 
@@ -11,8 +11,8 @@ class RecSysAdv(RecSys):
         '''
         lamda: regularization parameter
         alpha: learning rate
-        >>> recsys = RecSysAdv()
-        >>> recsys.load_ratings("testcase_ratings.csv")
+        #>>> recsys = RecSysAdv()
+        #>>> recsys.load_ratings("testcase_ratings.csv")
         #>>> recsys.load_ratings("../Dataset/ratings_Electronics_50.csv")
         #>>> recsys.SGD()
         '''
@@ -46,10 +46,10 @@ class RecSysAdv(RecSys):
     def biased_ALS(self, lamda=0.01):
         '''
         lamda: regularization parameter
-        >>> recsys = RecSysAdv()
-        >>> recsys.load_ratings("testcase_ratings.csv")
+        #>>> recsys = RecSysAdv()
+        #>>> recsys.load_ratings("testcase_ratings.csv")
         #>>> recsys.load_ratings("../Dataset/ratings_Electronics_50.csv")
-        >>> recsys.biased_ALS()
+        #>>> recsys.biased_ALS()
         '''
         #FIXME u, s, vt = svds(self.util_mat)
         #rank = len(s)
@@ -63,7 +63,7 @@ class RecSysAdv(RecSys):
         gammas = np.zeros((m, 1)) # items' biases
 
         # TODO comment
-        alpha = self.util_mat.count_nonzero() / n / m
+        alpha = self.util_mat.nnz / n / m
 
         for rnd in range(20):
             aug_U = np.concatenate((np.atleast_2d(np.ones(n)).T, U), axis=1)
