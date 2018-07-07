@@ -46,19 +46,44 @@ class EvaSys(Repo):
     def load_total_ratings(self, num_fold, filename):
         """
         Load the ratings file and split it into num_fold folds.
+        >>> evasys = EvaSys()
+        >>> evasys.load_total_ratings(3, "testcase_ratings.csv")
         """
 
         self.total_rating_file = filename
         self.num_fold = num_fold
         self.load_ratings(self.total_rating_file)
 
-        # TODO(TBD) split file into folds
         # generate filenames for split files
-        # for each user
-        #    get its nonzero elements
-        #    shuffle
-        #    split into num_fold folds
-        pass
+        for fold in range(num_fold):
+            self.split_rating_files.append(
+                    "ratings_split_" + str(fold + 1) + ".csv")
+
+        # generate an array for assignment
+        # each line in the rating_file will be assigned to different files
+        # according to the split map
+        q, r = divmod(self.util_mat.nnz, num_fold)
+        split_map = np.concatenate(
+                (np.tile(np.arange(num_fold), q), np.arange(r)))
+
+        num_users = self.util_mat.shape[0]
+        begin = 0
+        end = 0
+        for user_idx in range(num_users):
+            # locate the region for shuffling
+            end = begin + self.util_mat[user_idx].count_nonzero()
+            # shuffle each user's ratings
+            np.random.shuffle(split_map[begin:end])
+            begin = end
+
+        # write each line in the rating_file to different split file
+        # according to the assignment array
+        fw = []
+        for fold in range(num_fold):
+            fw.append(open(self.split_rating_files[fold], 'w'))
+        with open(self.total_rating_file, 'r') as fr:
+            for i, line in enumerate(fr):
+                fw[split_map[i]].write(line)
 
     def evaluate(self, rec_sys, positions):
         """

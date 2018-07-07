@@ -84,13 +84,6 @@ class RecSysAdv(Repo):
         """
         Return top k pairs of (item_idx, predicted_rating) according to the
         order of the predicted_rating.
-
-        >>> recsys = RecSysAdv()
-        >>> recsys.load_ratings("testcase_ratings.csv")
-        >>> user_idx = recsys.get_user_idx("U1")
-        >>> predictions = recsys.predict_top_k_recomm(user_idx, 2)
-        >>> [(item, "%.2f" %sim) for (item, sim) in predictions]
-        [(15.0, '4.00'), (16.0, '4.00')]
         """
 
         # list all items which the active user has already rated
