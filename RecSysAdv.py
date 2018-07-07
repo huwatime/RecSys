@@ -11,11 +11,15 @@ class RecSysAdv(Repo):
     def __init__(self):
         self.U = None
         self.V = None
+        self.rank = 2
         super().__init__()
+
+    def set_rank(self, rank):
+        self.rank = rank
 
     def load_ratings(self, arg, *args, **kwargs):
         super().load_ratings(arg, *args, **kwargs)
-        self.build_model()
+        self.build_model(self.rank)
 
     def build_model(self, rank=50):
         '''
@@ -27,7 +31,7 @@ class RecSysAdv(Repo):
         '''
 
         lamda = 0.01  # regularization parameter
-        alpha = 0.01  # learning rate
+        alpha = 1. / rank if rank > 100 else 0.01 # learning rate
         min_shape = min(self.util_mat.shape)
         rank = rank if rank < min_shape else min_shape
 
@@ -62,12 +66,13 @@ class RecSysAdv(Repo):
             avg_err /= (count + 1)
             text = "Building model, err = {:.4f}".format(avg_err)
             print(text, end='\r', flush=True)
-            if (iterates > 30) or (avg_err < 0.05):
+            if (iterates > 50) or (avg_err < 0.05):
                 print()
                 break
 
             # speed up a little bit in the later stage of iteration
-            alpha = 0.02 if avg_err < 0.5 else 0.01
+            if avg_err < 0.5:
+                alpha = 2. / rank if rank > 100 else 0.02
 
         self.U = U
         self.V = V
