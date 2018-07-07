@@ -1,118 +1,121 @@
 import numpy as np
-from scipy.sparse import csr_matrix
-from scipy.sparse.linalg import svds
 from Base import Repo
 
+
 class RecSysAdv(Repo):
+    """
+    An advanced recommender system which implements the matrix factorization
+    collaborative filtering.
+    """
+
     def __init__(self):
+        self.U = None
+        self.V = None
         super().__init__()
 
-    def SGD(self, lamda=0.01, alpha=0.03):
+    def load_ratings(self, arg, *args, **kwargs):
+        super().load_ratings(arg, *args, **kwargs)
+        self.build_model()
+
+    def build_model(self, rank=50):
         '''
-        lamda: regularization parameter
-        alpha: learning rate
-        #>>> recsys = RecSysAdv()
-        #>>> recsys.load_ratings("testcase_ratings.csv")
-        #>>> recsys.load_ratings("../Dataset/ratings_Electronics_50.csv")
-        #>>> recsys.SGD()
+        Use U (n x rank), V (m x rank) to estimate self.util_mat (n x m),
+        such that the the difference between U * V_t and self.util_mat is
+        minimized for the non-zero terms.
+        U, V are initialized with random values, and then adjusted using
+        stochastic gradient descent.
         '''
 
-        # FIXME
-        #u, s, vt = svds(self.util_mat)
-        #rank = len(s)
-        rank = 6
+        lamda = 0.01  # regularization parameter
+        alpha = 0.01  # learning rate
+        min_shape = min(self.util_mat.shape)
+        rank = rank if rank < min_shape else min_shape
 
-        n = self.util_mat.shape[0]
-        m = self.util_mat.shape[1]
+        # n and m are computed from the user_ids and item_ids instead of the
+        # shape of util_mat. This is because we may use exist mappings passed
+        # from the evaluation system, which may contain additional users or
+        # items that are not seen in the util_mat. And we should be able to
+        # predict their ratings by matrix factorization.
+        n = len(self.user_ids)
+        m = len(self.item_ids)
         U = np.random.rand(n, rank)
         V = np.random.rand(m, rank)
 
-        #transform csr_matrix to coordinate matrix
+        # transform csr_matrix to coordinate matrix
         cx = self.util_mat.tocoo()
-        for rnd in range(100):
-            total_err = 0
-            for count, (i, j, rating) in enumerate(zip(cx.row, cx.col, cx.data)):
+
+        iterates = 0
+        while True:
+            # loop all ratings and adjust U and V accordingly
+            avg_err = 0
+            for count, data in enumerate(zip(cx.row, cx.col, cx.data)):
+                i, j, rating = data
                 err = rating - np.dot(U[i], V[j].T)
-                total_err += abs(err)
+                avg_err += abs(err)
                 U_i = U[i]
                 V_j = V[j]
                 U[i] = U_i + alpha * (err * V_j - lamda * U_i)
                 V[j] = V_j + alpha * (err * U_i - lamda * V_j)
-            print(total_err / (count + 1))
 
-        #print(self.util_mat.todense())
-        #print(np.dot(U, V.T))
+            # stop condition
+            iterates += 1
+            avg_err /= (count + 1)
+            text = "Building model, err = {:.4f}".format(avg_err)
+            print(text, end='\r', flush=True)
+            if (iterates > 30) or (avg_err < 0.05):
+                print()
+                break
 
-    def biased_ALS(self, lamda=0.01):
+            # speed up a little bit in the later stage of iteration
+            alpha = 0.02 if avg_err < 0.5 else 0.01
+
+        self.U = U
+        self.V = V
+
+    def predict_rating(self, user_idx, item_idx):
         '''
-        lamda: regularization parameter
-        #>>> recsys = RecSysAdv()
-        #>>> recsys.load_ratings("testcase_ratings.csv")
-        #>>> recsys.load_ratings("../Dataset/ratings_Electronics_50.csv")
-        #>>> recsys.biased_ALS()
+        Return the predicted rating of the user to the item.
+        The prediction is made by calculating U * V_t.
         '''
-        #FIXME u, s, vt = svds(self.util_mat)
-        #rank = len(s)
-        rank = 2
+        rating = np.dot(self.U[user_idx], self.V[item_idx].T)
+        return max(min(rating, 5), 0)
 
-        n = self.util_mat.shape[0]
-        m = self.util_mat.shape[1]
-        U = np.random.rand(n, rank)
-        V = np.random.rand(m, rank)
-        betas = np.zeros((n, 1)) # users' biases
-        gammas = np.zeros((m, 1)) # items' biases
+    def predict_top_k_recomm(self, user_idx, k):
+        """
+        Return top k pairs of (item_idx, predicted_rating) according to the
+        order of the predicted_rating.
 
-        # TODO comment
-        alpha = self.util_mat.nnz / n / m
+        >>> recsys = RecSysAdv()
+        >>> recsys.load_ratings("testcase_ratings.csv")
+        >>> user_idx = recsys.get_user_idx("U1")
+        >>> predictions = recsys.predict_top_k_recomm(user_idx, 2)
+        >>> [(item, "%.2f" %sim) for (item, sim) in predictions]
+        [(15.0, '4.00'), (16.0, '4.00')]
+        """
 
-        for rnd in range(20):
-            aug_U = np.concatenate((np.atleast_2d(np.ones(n)).T, U), axis=1)
-            for j in range(m):
-                r_j = np.where(self.util_mat[:,j].todense() > 0, 1, 0)
-                # FIXME need to understand the last dot term
-                aug_V_j = np.dot(
-                            np.linalg.inv(
-                                np.dot(aug_U.T, aug_U) +
-                                lamda * np.identity(rank + 1) +
-                                alpha * np.dot((r_j * aug_U).T, aug_U)),
-                            np.dot(
-                                aug_U.T,
-                                np.array(self.util_mat[:,j] - betas) * np.array(alpha * r_j + 1)))
-                gammas[j] = aug_V_j[0]
-                V[j,:] = aug_V_j[1:].T
+        # list all items which the active user has already rated
+        rated_items = self.util_mat[user_idx].nonzero()[1]
 
-            aug_V = np.concatenate((np.atleast_2d(np.ones(m)).T, V), axis=1)
-            for i in range(n):
-                r_i = np.where(self.util_mat[i].T.todense() > 0, 1, 0)
-                # FIXME need to understand the last dot term
-                aug_U_i = np.dot(
-                            np.linalg.inv(
-                                np.dot(aug_V.T, aug_V) +
-                                lamda * np.identity(rank + 1) +
-                                alpha * np.dot((r_i * aug_V).T, aug_V)),
-                            np.dot(
-                                aug_V.T,
-                                np.array(self.util_mat[i].T - gammas) * np.array(alpha * r_i + 1)))
-                betas[i] = aug_U_i[0]
-                U[i,:] = aug_U_i[1:].T
+        # candidate items are items that can be recommanded to the target user.
+        # It is generated from the following manner: First, find out all the
+        # users that has rated the items the target user has also rated. Then,
+        # union all the items these user has rated. Finally, exclude the items
+        # the target user has already rated.
+        candidate_items = []
+        user_list = []
+        for item_idx in rated_items:
+            user_list = np.union1d(
+                    user_list, self.util_mat[:, item_idx].nonzero()[0])
+        for user in user_list:
+            candidate_items = np.union1d(
+                    candidate_items, self.util_mat[user].nonzero()[1])
+        candidate_items = np.setdiff1d(candidate_items, rated_items)
 
-#        for rnd in range(10):
-#            # TODO comment
-#            aug_U = np.concatenate((np.atleast_2d(np.ones(n)).T, U), axis=1)
-#            aug_V = np.dot(
-#                        np.linalg.inv(np.dot(aug_U.T, aug_U) + lamda * np.identity(rank + 1)),
-#                        csr_matrix(aug_U.T).dot(self.util_mat - betas.repeat(m, axis=1))).T
-#            gammas = aug_V[:,0]
-#            V = aug_V[:,1:]
-#
-#            aug_V = np.concatenate((np.atleast_2d(np.ones(m)).T, V), axis=1)
-#            aug_U = np.dot(
-#                       np.linalg.inv(np.dot(aug_V.T, aug_V) + lamda * np.identity(rank + 1)),
-#                       csr_matrix(aug_V.T).dot(self.util_mat.T - gammas.repeat(n, axis=1))).T
-#            betas = aug_U[:,0]
-#            U = aug_U[:,1:]
-#
-        print(self.util_mat.todense())
-        print(np.dot(U, V.T) + betas.repeat(m, axis=1) + gammas.T.repeat(n, axis=0))
-        print(betas)
-        print(gammas)
+        predictions = []
+        for item_idx in candidate_items:
+            rating = self.predict_rating(int(user_idx), int(item_idx))
+            if rating > 0:
+                predictions.append((item_idx, rating))
+        predictions.sort(key=lambda tup: tup[1], reverse=True)
+
+        return predictions[0: k] if len(predictions) > k else predictions

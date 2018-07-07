@@ -4,7 +4,7 @@ from scipy.sparse import csr_matrix
 
 class Repo():
     """
-    A base class for a recommander/evaluation system.
+    A base class for a recommender/evaluation system.
     After calling load_ratings(), the user-item rating matrix is generated.
     Functions for mapping between ID and index are also given.
     """
@@ -108,6 +108,7 @@ class Repo():
         >>> recsys = Repo()
         >>> recsys.load_ratings("testcase_ratings.csv")
         >>> print(recsys.util_mat.todense())
+        ... # doctest: +NORMALIZE_WHITESPACE
         [[2. 2. 1. 4. 4. 2. 2. 1. 1. 1. 1. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
          [3. 0. 3. 5. 0. 0. 2. 0. 0. 0. 2. 2. 1. 2. 2. 5. 0. 0. 0. 0.]
          [0. 0. 3. 0. 4. 0. 2. 2. 2. 0. 0. 2. 1. 2. 2. 0. 2. 2. 0. 0.]
@@ -161,7 +162,7 @@ class Repo():
                 dtype=float,
                 shape=(len(self.user_ids), len(self.item_ids)))
 
-        # compute the avarage rating of each user
+        # compute the average rating of each user
         self.user_rating_means = np.bincount(users, weights=ratings)\
             / np.bincount(users)
 
@@ -175,7 +176,7 @@ class EvaMatrix():
     def __init__(self, positions):
         self.rmse = 0
         self.mae = 0
-        self.positions = positions  # An array specifing the Ks
+        self.positions = positions  # An array specifying the Ks
         self.p_at_k = np.zeros(len(positions))
         self.r_at_k = np.zeros(len(positions))
         self.mrr_at_k = np.zeros(len(positions))
@@ -239,7 +240,6 @@ class EvaMatrix():
         self.time /= 1.
 
     def print_data(self):
-        np.set_printoptions(precision=2)
         print("RMSE = {:.2f}\nMAE  = {:.2f}".format(self.rmse, self.mae))
         print(
             "P@K    = {}\nR@K    = {}\nMRR@K  = {}\nNDCG@K = {}".format(

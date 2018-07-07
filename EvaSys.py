@@ -127,7 +127,8 @@ class EvaSys(Repo):
 
         # Loop all users in test_data
         for user_idx in range(num_users):
-            print("Computing User {} ...".format(user_idx+1), end='\r', flush=True)
+            text = "Computing User {}/{} ...".format(user_idx + 1, num_users)
+            print(text, flush=True, end='\r')
             result = EvaMatrix(positions)
             positive_items = {}
 
