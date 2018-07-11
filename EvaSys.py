@@ -1,4 +1,5 @@
 import math
+import random
 import time
 import numpy as np
 from Base import Repo
@@ -85,20 +86,32 @@ class EvaSys(Repo):
             for i, line in enumerate(fr):
                 fw[split_map[i]].write(line)
 
-    def evaluate(self, rec_sys, positions):
+    def evaluate(self, rec_sys, positions, use_all_user=True, num_user=10):
         """
         Evaluate the given recommander system rec_sys in the k-fold manner.
         Return the measurement matrics including RMSE, MAE, P@M, R@M, MRR@M,
         nDCG@M, and time@M.
         positions is an array specifying the Ms.
+        use_all_user is a boolean to control if we evaluate on all users. If
+        false, choose num_user users randomly to evaluate.
         """
+
+        user_list = []
+        if not use_all_user:
+            print("\n=============== Evaluate on the following {} users:"
+                    .format(num_user))
+            for i in range(num_user):
+                user_idx = random.randint(0, len(self.user_ids)-1)
+                user_list.append(user_idx)
+                user_id = self.get_user_id(user_idx)
+                print("user {}: {}".format(i+1, user_id))
 
         result_all_model = EvaMatrix(positions)
         for fold in range(self.num_fold):
             print("\n=============== Fold", fold+1)
             training_file, test_file = self.generate_train_test_files(fold)
             result = self.evaluate_core(
-                    training_file, test_file, rec_sys, positions)
+                    training_file, test_file, rec_sys, positions, user_list)
             result_all_model.accumulate(result)
         result_all_model.avg(self.num_fold, self.num_fold)
         print("\n=============== Matrics Avg and Total Time")
@@ -127,7 +140,8 @@ class EvaSys(Repo):
 
         return training_file_name, test_file_name
 
-    def evaluate_core(self, training_file, test_file, rec_sys, positions):
+    def evaluate_core(
+            self, training_file, test_file, rec_sys, positions, user_list):
         start_time = time.time()
         rec_sys.load_ratings(
                 training_file,
@@ -146,13 +160,15 @@ class EvaSys(Repo):
                 self.user_ids,
                 self.item_ids)
 
-        num_users = test_data.util_mat.shape[0]
+        if len(user_list) == 0:
+            user_list = range(test_data.util_mat.shape[0])
+        num_users = len(user_list)
         num_ratings = 0
         result_all_user = EvaMatrix(positions)
 
         # Loop all users in test_data
-        for user_idx in range(num_users):
-            text = "Computing User {}/{} ...".format(user_idx + 1, num_users)
+        for user_cnt, user_idx in enumerate(user_list):
+            text = "Computing User {}/{} ...".format(user_cnt + 1, num_users)
             print(text, flush=True, end='\r')
             result = EvaMatrix(positions)
             positive_items = {}

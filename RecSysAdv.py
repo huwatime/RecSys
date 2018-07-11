@@ -31,7 +31,7 @@ class RecSysAdv(Repo):
         '''
 
         lamda = 0.01  # regularization parameter
-        alpha = 1. / rank if rank > 100 else 0.01 # learning rate
+        alpha = 1. / rank if rank > 100 else 0.01  # learning rate
         min_shape = min(self.util_mat.shape)
         rank = rank if rank < min_shape else min_shape
 

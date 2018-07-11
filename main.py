@@ -5,8 +5,8 @@ from EvaSys import EvaSys
 
 parser = argparse.ArgumentParser(
         description='Evaluate the recommender system with the ratings given.')
-parser.add_argument('model', metavar='model', type=str,
-                    choices=['BLRS', 'ARS'],
+parser.add_argument('-m', dest='model', metavar='model', type=str,
+                    required=True, choices=['BLRS', 'ARS'],
                     help='The recommender system to be evaluated \
                             ("BLRS"|"ARS")')
 parser.add_argument('-f', dest='files', metavar='file', type=str, nargs='+',
@@ -26,8 +26,11 @@ parser.add_argument('-r', dest='rank', metavar='rank', type=int, default=50,
 parser.add_argument('-n', dest='num_fold', metavar='num_fold', type=int,
                     default=5,
                     help='The number of folds in n-fold evaluation manner. \
-                            If multiple rating files are specifiled, this \
+                            If multiple rating files are specified, this \
                             number will be ingnored.')
+parser.add_argument('-u', dest='num_user', metavar='num_user', type=int,
+                    help='The number of users to be evaluated. If not \
+                            specified, all users wil be evaluated.')
 
 args = parser.parse_args()
 model = args.model
@@ -35,6 +38,7 @@ files = args.files
 ks = args.ks
 rank = args.rank
 num_fold = args.num_fold
+num_user = args.num_user
 
 if model == "BLRS":
     RS = RecSysBaseLine()
@@ -52,4 +56,7 @@ print()
 print("###### Evaluating     ", model)
 print("###### Rating File(s) ", files)
 print("###### K(s)           ", ks)
-ES.evaluate(RS, ks)
+if num_user == None:
+    ES.evaluate(RS, ks)
+else:
+    ES.evaluate(RS, ks, False, num_user)
