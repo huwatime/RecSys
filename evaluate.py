@@ -33,30 +33,24 @@ parser.add_argument('-u', dest='num_user', metavar='num_user', type=int,
                             specified, all users wil be evaluated.')
 
 args = parser.parse_args()
-model = args.model
-files = args.files
-ks = args.ks
-rank = args.rank
-num_fold = args.num_fold
-num_user = args.num_user
 
-if model == "BLRS":
+if args.model == "BLRS":
     RS = RecSysBaseLine()
 else:
     RS = RecSysAdv()
-    RS.set_rank(rank)
+    RS.set_rank(args.rank)
 
 ES = EvaSys()
-if len(files) == 1:
-    ES.load_total_ratings(num_fold, files[0])
+if len(args.files) == 1:
+    ES.load_total_ratings(args.num_fold, args.files[0])
 else:
-    ES.load_split_ratings(files)
+    ES.load_split_ratings(args.files)
 
 print()
-print("###### Evaluating     ", model)
-print("###### Rating File(s) ", files)
-print("###### K(s)           ", ks)
-if num_user == None:
-    ES.evaluate(RS, ks)
+print("###### Evaluating     ", args.model)
+print("###### Rating File(s) ", args.files)
+print("###### K(s)           ", args.ks)
+if args.num_user is None:
+    ES.evaluate(RS, args.ks)
 else:
-    ES.evaluate(RS, ks, False, num_user)
+    ES.evaluate(RS, args.ks, False, args.num_user)

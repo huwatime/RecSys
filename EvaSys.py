@@ -99,7 +99,7 @@ class EvaSys(Repo):
         user_list = []
         if not use_all_user:
             print("\n=============== Evaluate on the following {} users:"
-                    .format(num_user))
+                  .format(num_user))
             for i in range(num_user):
                 user_idx = random.randint(0, len(self.user_ids)-1)
                 user_list.append(user_idx)
